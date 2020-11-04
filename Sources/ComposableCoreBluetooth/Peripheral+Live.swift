@@ -10,49 +10,6 @@ import CoreBluetooth
 import ComposableArchitecture
 import Combine
 
-private func couldNotFindRawServiceValue() {
-    assertionFailure(
-        """
-        The supplied service did not have a raw value. This is considered a programmer error. \
-        You should use a Service object returned to you.
-        """
-    )
-}
-
-private func couldNotFindRawCharacteristicValue() {
-    assertionFailure(
-        """
-        The supplied characteristic did not have a raw value. This is considered a programmer error. \
-        You should use a Characteristic object returned to you.
-        """
-    )
-}
-
-private func couldNotFindRawDescriptorValue() {
-    assertionFailure(
-        """
-        The supplied descriptor did not have a raw value. This is considered a programmer error. \
-        You should use a Descriptor object returned to you.
-        """
-    )
-}
-
-private func convertToResult<T, E>(_ value: T?, error: E?) -> Result<T, BluetoothError> where E: Error {
-    if let error = error {
-        if let cbError = error as? CBError {
-            return .failure(.coreBluetooth(cbError))
-        } else {
-            return .failure(.unknown(error.localizedDescription))
-        }
-    } else {
-        if let value = value {
-            return .success(value)
-        } else {
-            return .failure(.valueAndErrorAreEmpty)
-        }
-    }
-}
-
 extension Peripheral {
     
     public static func live(from cbPeripheral: CBPeripheral, subscriber: Effect<BluetoothManager.Action, Never>.Subscriber) -> Self {

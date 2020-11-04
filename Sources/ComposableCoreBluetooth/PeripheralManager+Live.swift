@@ -20,40 +20,6 @@ private struct Dependencies {
     let subscriber: Effect<PeripheralManager.Action, Never>.Subscriber
 }
 
-private func couldNotFindRawRequestValue() {
-    assertionFailure(
-        """
-        The supplied request did not have a raw value. This is considered a programmer error. \
-        You should use a ATTRequest object returned to you.
-        """
-    )
-}
-
-private func couldNotFindRawCentralValue() {
-    assertionFailure(
-        """
-        The supplied central did not have a raw value. This is considered a programmer error. \
-        You should use a Central object returned to you.
-        """
-    )
-}
-
-private func convertToResult<T, E>(_ value: T?, error: E?) -> Result<T, BluetoothError> where E: Error {
-    if let error = error {
-        if let cbError = error as? CBError {
-            return .failure(.coreBluetooth(cbError))
-        } else {
-            return .failure(.unknown(error.localizedDescription))
-        }
-    } else {
-        if let value = value {
-            return .success(value)
-        } else {
-            return .failure(.valueAndErrorAreEmpty)
-        }
-    }
-}
-
 extension PeripheralManager {
     
     public static let live: PeripheralManager = { () -> PeripheralManager in
