@@ -13,40 +13,41 @@ public struct Descriptor: Equatable {
     
     let rawValue: CBDescriptor?
     public let identifier: CBUUID
-    public let value: DescriptorType?
     
     init(from descriptor: CBDescriptor) {
         rawValue = descriptor
         identifier = descriptor.uuid
-        
-        switch descriptor.uuid.uuidString {
-        case CBUUIDCharacteristicExtendedPropertiesString:
-            value = .characteristicExtendedProperties(descriptor.value as? NSNumber)
-        case CBUUIDCharacteristicUserDescriptionString:
-            value = .characteristicUserDescription(descriptor.value as? String)
-        case CBUUIDClientCharacteristicConfigurationString:
-            value = .clientCharacteristicConfiguration(descriptor.value as? NSNumber)
-        case CBUUIDServerCharacteristicConfigurationString:
-            value = .serverCharacteristicConfiguration(descriptor.value as? NSNumber)
-        case CBUUIDCharacteristicFormatString:
-            value = .characteristicFormat(descriptor.value as? Data)
-        case CBUUIDCharacteristicAggregateFormatString:
-            value = .characteristicAggregateFormat(descriptor.value as? Data)
-        default:
-            value = nil
-        }
     }
     
-    init(identifier: CBUUID, value: DescriptorType?) {
+    init(identifier: CBUUID) {
         rawValue = nil
         self.identifier = identifier
-        self.value = value
+    }
+    
+    static func anyToValue(uuid: CBUUID, _ value: Any?) -> Value? {
+        switch uuid.uuidString {
+        case CBUUIDCharacteristicExtendedPropertiesString: return .characteristicExtendedProperties(value as? NSNumber)
+        case CBUUIDCharacteristicUserDescriptionString: return .characteristicUserDescription(value as? String)
+        case CBUUIDClientCharacteristicConfigurationString: return .clientCharacteristicConfiguration(value as? NSNumber)
+        case CBUUIDServerCharacteristicConfigurationString: return .serverCharacteristicConfiguration(value as? NSNumber)
+        case CBUUIDCharacteristicFormatString: return .characteristicFormat(value as? Data)
+        case CBUUIDCharacteristicAggregateFormatString: return .characteristicAggregateFormat(value as? Data)
+        default: return nil
+        }
     }
 }
 
 extension Descriptor {
     
-    public enum DescriptorType: Equatable {
+    public enum Action: Equatable {
+        case didUpdateValue(Result<Value, BluetoothError>)
+        case didWriteValue(Result<Value, BluetoothError>)
+    }
+}
+
+extension Descriptor {
+    
+    public enum Value: Equatable {
         case characteristicExtendedProperties(NSNumber?)
         case characteristicUserDescription(String?)
         case clientCharacteristicConfiguration(NSNumber?)
@@ -64,12 +65,29 @@ extension Descriptor {
             case .characteristicAggregateFormat(let data): return data
             }
         }
+        
+        var cbuuid: CBUUID {
+            switch self {
+            case .characteristicExtendedProperties: return CBUUID(string: CBUUIDCharacteristicExtendedPropertiesString)
+            case .characteristicUserDescription: return CBUUID(string: CBUUIDCharacteristicUserDescriptionString)
+            case .clientCharacteristicConfiguration: return CBUUID(string: CBUUIDClientCharacteristicConfigurationString)
+            case .serverCharacteristicConfiguration: return CBUUID(string: CBUUIDServerCharacteristicConfigurationString)
+            case .characteristicFormat: return CBUUID(string: CBUUIDCharacteristicFormatString)
+            case .characteristicAggregateFormat: return CBUUID(string: CBUUIDCharacteristicAggregateFormatString)
+            }
+        }
     }
 }
 
 extension Descriptor {
     
-    public static func mock(identifier: CBUUID, value: DescriptorType?) -> Self {
-        return Descriptor(identifier: identifier, value: value)
+    public static func mock(identifier: CBUUID) -> Self {
+        return Descriptor(identifier: identifier)
+    }
+}
+
+extension Descriptor: Identifiable {
+    public var id: CBUUID {
+        return identifier
     }
 }

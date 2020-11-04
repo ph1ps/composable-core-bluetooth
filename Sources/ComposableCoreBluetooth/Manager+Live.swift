@@ -44,17 +44,33 @@ extension BluetoothManager {
     public static let live: BluetoothManager = { () -> BluetoothManager in
         var manager = BluetoothManager()
         
+        
         manager.create = { id, queue, options in
-            Effect.run { subscriber in
-                let delegate = Delegate(subscriber)
-                let manager = CBCentralManager(delegate: delegate, queue: queue, options: options?.toDictionary())
-                
-                dependencies[id] = Dependencies(manager: manager, delegate: delegate, subscriber: subscriber)
-                
-                return AnyCancellable {
-                    dependencies[id] = nil
-                }
-            }
+            return .concatenate(
+                Effect.run { subscriber in
+                    let delegate = Delegate(subscriber)
+                    let manager = CBCentralManager(delegate: delegate, queue: queue, options: options?.toDictionary())
+                    
+                    dependencies[id] = Dependencies(manager: manager, delegate: delegate, subscriber: subscriber)
+                    
+                    subscriber.send(.didUpdateState(manager.state))
+                    subscriber.send(.didUpdateAuthorization(manager.authorization))
+                    
+                    return AnyCancellable {
+                        dependencies[id] = nil
+                    }
+                },
+                dependencies[id]?
+                    .manager
+                    .publisher(for: \.isScanning)
+                    .map(BluetoothManager.Action.didUpdateScanningState)
+                    .eraseToEffect() ?? .none,
+                dependencies[id]?
+                    .manager
+                    .publisher(for: \.authorization)
+                    .map(BluetoothManager.Action.didUpdateAuthorization)
+                    .eraseToEffect() ?? .none
+            )
         }
         
         manager.destroy = { id in
@@ -118,10 +134,6 @@ extension BluetoothManager {
             .fireAndForget { dependencies[id]?.manager.stopScan() }
         }
         
-        manager.isScanning = { id in
-            dependencies[id]?.manager.isScanning ?? false
-        }
-        
         #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
         manager.registerForConnectionEvents = { id, options in
             .fireAndForget { dependencies[id]?.manager.registerForConnectionEvents(options: options?.toDictionary()) }
@@ -147,11 +159,27 @@ extension BluetoothManager {
         }
         
         func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-            subscriber.send(.didDisconnect(.live(from: peripheral, subscriber: subscriber), error as? CBError))
+            if let error = error {
+                if let error = error as? CBError {
+                    subscriber.send(.didDisconnect(.coreBluetooth(error)))
+                } else {
+                    subscriber.send(.didDisconnect(.unknown(error.localizedDescription)))
+                }
+            } else {
+                subscriber.send(.didDisconnect(nil))
+            }
         }
         
         func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-            subscriber.send(.didFailToConnect(.live(from: peripheral, subscriber: subscriber), error as? CBError))
+            if let error = error {
+                if let error = error as? CBError {
+                    subscriber.send(.didFailToConnect(.coreBluetooth(error)))
+                } else {
+                    subscriber.send(.didFailToConnect(.unknown(error.localizedDescription)))
+                }
+            } else {
+                subscriber.send(.didFailToConnect(.unknown(nil)))
+            }
         }
         
         #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)

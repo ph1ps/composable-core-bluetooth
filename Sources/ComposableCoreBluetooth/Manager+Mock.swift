@@ -48,9 +48,6 @@ extension BluetoothManager {
         stopScan: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
             _unimplemented("stopScan")
         },
-        isScanning: @escaping (AnyHashable) -> Bool = { _ in
-            _unimplemented("isScanning")
-        },
         registerForConnectionEvents: @escaping (AnyHashable, ConnectionEventOptions?) -> Effect<Never, Never> = { _, _ in
             _unimplemented("registerForConnectionEvents")
         },
@@ -67,7 +64,6 @@ extension BluetoothManager {
             retrievePeripherals: retrievePeripherals,
             scanForPeripherals: scanForPeripherals,
             stopScan: stopScan,
-            isScanning: isScanning,
             registerForConnectionEvents: registerForConnectionEvents,
             supports: supports
         )
@@ -97,9 +93,6 @@ extension BluetoothManager {
         },
         stopScan: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
             _unimplemented("stopScan")
-        },
-        isScanning: @escaping (AnyHashable) -> Bool = { _ in
-            _unimplemented("isScanning")
         }
     ) -> Self {
         Self(
@@ -110,8 +103,7 @@ extension BluetoothManager {
             retrieveConnectedPeripherals: retrieveConnectedPeripherals,
             retrievePeripherals: retrievePeripherals,
             scanForPeripherals: scanForPeripherals,
-            stopScan: stopScan,
-            isScanning: isScanning
+            stopScan: stopScan
         )
     }
 }

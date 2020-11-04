@@ -17,45 +17,41 @@ public struct BluetoothManager {
     }
     
     var destroy: (AnyHashable) -> Effect<Never, Never> = { _ in
-        _unimplemented("create")
+        _unimplemented("destroy")
     }
     
     var connect: (AnyHashable, Peripheral, ConnectionOptions?) -> Effect<Never, Never> = { _, _, _ in
-        _unimplemented("create")
+        _unimplemented("connect")
     }
     
     var cancelConnection: (AnyHashable, Peripheral) -> Effect<Never, Never> = { _, _ in
-        _unimplemented("create")
+        _unimplemented("cancelConnection")
     }
     
     var retrieveConnectedPeripherals: (AnyHashable, [CBUUID]) -> [Peripheral] = { _, _ in
-        _unimplemented("create")
+        _unimplemented("retrieveConnectedPeripherals")
     }
     
     var retrievePeripherals: (AnyHashable, [UUID]) -> [Peripheral] = { _, _ in
-        _unimplemented("create")
+        _unimplemented("retrievePeripherals")
     }
     
     var scanForPeripherals: (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never, Never> = { _, _, _ in
-        _unimplemented("create")
+        _unimplemented("scanForPeripherals")
     }
     
     var stopScan: (AnyHashable) -> Effect<Never, Never> = { _ in
-        _unimplemented("create")
-    }
-    
-    var isScanning: (AnyHashable) -> Bool = { _ in
-        _unimplemented("create")
+        _unimplemented("stopScan")
     }
     
     @available(macOS, unavailable)
     var registerForConnectionEvents: (AnyHashable, ConnectionEventOptions?) -> Effect<Never, Never> = { _, _ in
-        _unimplemented("create")
+        _unimplemented("registerForConnectionEvents")
     }
     
     @available(macOS, unavailable)
     var supports: (CBCentralManager.Feature) -> Bool = { _ in
-        _unimplemented("create")
+        _unimplemented("supports")
     }
 }
 
@@ -92,10 +88,6 @@ extension BluetoothManager {
         stopScan(id)
     }
     
-    public func isScanning(id: AnyHashable) -> Bool {
-        isScanning(id)
-    }
-    
     @available(macOS, unavailable)
     public func supports(_ feature: CBCentralManager.Feature) -> Bool {
         supports(feature)
@@ -111,11 +103,14 @@ extension BluetoothManager {
     
     public enum Action: Equatable {
         case didConnect(Peripheral)
-        case didDisconnect(Peripheral, CBError?)
-        case didFailToConnect(Peripheral, CBError?)
+        case didDisconnect(BluetoothError?)
+        case didFailToConnect(BluetoothError)
         case didDiscover(Peripheral, AdvertismentData, NSNumber)
         case willRestore(RestorationOptions)
+        
         case didUpdateState(CBManagerState)
+        case didUpdateAuthorization(CBManagerAuthorization)
+        case didUpdateScanningState(Bool)
         
         @available(macOS, unavailable)
         case didUpdateANCSAuthorization(Peripheral)

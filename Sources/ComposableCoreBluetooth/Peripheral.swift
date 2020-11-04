@@ -136,20 +136,16 @@ extension Peripheral {
 
 extension Peripheral {
     public enum Action: Equatable {
-        case didDiscoverServices(Result<[Service], CBError>)
-        case didDiscoverIncludedServices(Result<Service, CBError>)
-        case didDiscoverCharacteristics(Result<Service, CBError>)
-        case didDiscoverDescriptors(Result<Characteristic, CBError>)
-        case didUpdateCharacteristicValue(Result<Characteristic, CBError>)
-        case didUpdateDescriptorValue(Result<Descriptor, CBError>)
-        case didWriteCharacteristicValue(Result<Characteristic, CBError>)
-        case didWriteDescriptorValue(Result<Descriptor, CBError>)
         case isReadyToSendWriteWithoutResponse
-        case didUpdateNotificationState(Result<Characteristic, CBError>)
-        case didReadRSSI(Result<NSNumber, CBError>)
+        case didDiscoverServices(Result<[Service], BluetoothError>)
+        case didReadRSSI(Result<NSNumber, BluetoothError>)
+        case didOpenL2CAPChannel(Result<CBL2CAPChannel, BluetoothError>)
         case didUpdateName(String?)
         case didModifyServices([Service])
-        case didOpenL2CAPChannel(Result<CBL2CAPChannel?, CBError>)
+        
+        case service(CBUUID, Service.Action)
+        case characteristic(CBUUID, Characteristic.Action)
+        case descriptor(CBUUID, Descriptor.Action)
     }
 }
 
