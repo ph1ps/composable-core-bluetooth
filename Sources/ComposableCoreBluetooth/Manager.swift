@@ -44,8 +44,7 @@ public struct BluetoothManager {
         _unimplemented("stopScan")
     }
     
-    @available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *)
-    public internal(set) lazy var authorization: () -> CBManagerAuthorization = {
+    var _authorization: () -> CBManagerAuthorization = {
         _unimplemented("authorization")
     }
     
@@ -91,6 +90,11 @@ extension BluetoothManager {
     
     public func stopScan(id: AnyHashable) -> Effect<Never, Never> {
         stopScan(id)
+    }
+    
+    @available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *)
+    public func authorization() -> CBManagerAuthorization {
+        _authorization()
     }
     
     @available(macOS, unavailable)

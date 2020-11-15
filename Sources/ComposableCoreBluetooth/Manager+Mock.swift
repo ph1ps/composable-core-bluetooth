@@ -50,7 +50,7 @@ extension BluetoothManager {
             retrievePeripherals: retrievePeripherals,
             scanForPeripherals: scanForPeripherals,
             stopScan: stopScan,
-            authorization: authorization
+            _authorization: authorization
         )
     }
     
@@ -99,7 +99,7 @@ extension BluetoothManager {
             retrievePeripherals: retrievePeripherals,
             scanForPeripherals: scanForPeripherals,
             stopScan: stopScan,
-            authorization: authorization,
+            _authorization: authorization,
             registerForConnectionEvents: registerForConnectionEvents,
             supports: supports
         )

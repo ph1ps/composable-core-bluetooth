@@ -135,7 +135,7 @@ extension BluetoothManager {
         }
         
         if #available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *) {
-            manager.authorization = {
+            manager._authorization = {
                 CBCentralManager.authorization
             }
         }
