@@ -12,14 +12,20 @@ import ComposableArchitecture
 import Combine
 import CasePaths
 
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 private var dependencies: [AnyHashable: Dependencies] = [:]
 
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 private struct Dependencies {
     let manager: CBPeripheralManager
     let delegate: PeripheralManager.Delegate
     let subscriber: Effect<PeripheralManager.Action, Never>.Subscriber
 }
 
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 extension PeripheralManager {
     
     public static let live: PeripheralManager = { () -> PeripheralManager in

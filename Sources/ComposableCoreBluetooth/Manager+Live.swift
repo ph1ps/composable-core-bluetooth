@@ -134,6 +134,12 @@ extension BluetoothManager {
             .fireAndForget { dependencies[id]?.manager.stopScan() }
         }
         
+        if #available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *) {
+            manager.authorization = {
+                CBCentralManager.authorization
+            }
+        }
+        
         #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
         manager.registerForConnectionEvents = { id, options in
             .fireAndForget { dependencies[id]?.manager.registerForConnectionEvents(options: options?.toDictionary()) }

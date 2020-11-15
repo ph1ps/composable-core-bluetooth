@@ -16,6 +16,8 @@ public struct MutableCharacteristic {
     public var permissions: CBAttributePermissions
     public var descriptors: [MutableDescriptor]?
     
+    @available(tvOS, unavailable)
+    @available(watchOS, unavailable)
     var cbMutableCharacteristic: CBMutableCharacteristic {
         let characteristic = CBMutableCharacteristic(type: type, properties: properties, value: value, permissions: permissions)
         characteristic.descriptors = descriptors?.map(\.cbMutableDescriptor)

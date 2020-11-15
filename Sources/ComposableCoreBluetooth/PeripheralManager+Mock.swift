@@ -10,6 +10,8 @@ import Foundation
 import CoreBluetooth
 import ComposableArchitecture
 
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 extension PeripheralManager {
     
     public static func mock(

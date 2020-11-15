@@ -10,6 +10,8 @@ import Foundation
 import CoreBluetooth
 import ComposableArchitecture
 
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 public struct PeripheralManager {
     
     var create: (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action, Never> = { _, _, _ in
@@ -61,6 +63,8 @@ public struct PeripheralManager {
     }
 }
 
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 extension PeripheralManager {
     
     public func create(id: AnyHashable, queue: DispatchQueue?, options: InitializationOptions?) -> Effect<Action, Never> {
@@ -112,6 +116,8 @@ extension PeripheralManager {
     }
 }
 
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 extension PeripheralManager {
     
     public enum Action: Equatable {
@@ -132,6 +138,8 @@ extension PeripheralManager {
     }
 }
 
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 extension PeripheralManager {
     
     public struct InitializationOptions {

@@ -44,6 +44,11 @@ public struct BluetoothManager {
         _unimplemented("stopScan")
     }
     
+    @available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *)
+    public internal(set) lazy var authorization: () -> CBManagerAuthorization = {
+        _unimplemented("authorization")
+    }
+    
     @available(macOS, unavailable)
     var registerForConnectionEvents: (AnyHashable, ConnectionEventOptions?) -> Effect<Never, Never> = { _, _ in
         _unimplemented("registerForConnectionEvents")

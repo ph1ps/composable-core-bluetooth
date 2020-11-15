@@ -12,6 +12,8 @@ import CoreBluetooth
 public struct MutableDescriptor {
     public var value: Descriptor.Value
     
+    @available(tvOS, unavailable)
+    @available(watchOS, unavailable)
     var cbMutableDescriptor: CBMutableDescriptor {
         return CBMutableDescriptor(type: value.cbuuid, value: value.associatedValue)
     }

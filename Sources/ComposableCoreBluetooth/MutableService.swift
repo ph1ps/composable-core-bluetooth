@@ -15,6 +15,8 @@ public struct MutableService {
     public var characteristics: [MutableCharacteristic]?
     public var includedServices: [MutableService]?
     
+    @available(tvOS, unavailable)
+    @available(watchOS, unavailable)
     var cbMutableService: CBMutableService {
         let service = CBMutableService(type: type, primary: isPrimary)
         service.characteristics = characteristics?.map(\.cbMutableCharacteristic)
