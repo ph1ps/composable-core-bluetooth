@@ -19,6 +19,26 @@ public func _unimplemented(_ function: StaticString, file: StaticString = #file,
     )
 }
 
+func couldNotFindBluetoothManager(id: Any) {
+    assertionFailure(
+        """
+        A Bluetooth manager could not be found with the id \(id). This is considered a programmer error. \
+        You should not invoke methods on a Bluetooth manager before it has been created or after it \
+        has been destroyed. Refactor your code to make sure there is a Bluetooth manager created by the \
+        time you invoke this endpoint.
+        """
+    )
+}
+
+func couldNotFindRawPeripheralValue() {
+    assertionFailure(
+        """
+        The supplied peripheral did not have a raw value. This is considered a programmer error. \
+        You should use the .live static function to initialize a peripheral.
+        """
+    )
+}
+
 func couldNotFindRawServiceValue() {
     assertionFailure(
         """

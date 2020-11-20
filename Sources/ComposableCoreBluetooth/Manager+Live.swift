@@ -19,31 +19,10 @@ private struct Dependencies {
     let subscriber: Effect<BluetoothManager.Action, Never>.Subscriber
 }
 
-private func couldNotFindBluetoothManager(id: Any) {
-    assertionFailure(
-        """
-        A Bluetooth manager could not be found with the id \(id). This is considered a programmer error. \
-        You should not invoke methods on a Bluetooth manager before it has been created or after it \
-        has been destroyed. Refactor your code to make sure there is a Bluetooth manager created by the \
-        time you invoke this endpoint.
-        """
-    )
-}
-
-private func couldNotFindRawPeripheralValue() {
-    assertionFailure(
-        """
-        The supplied peripheral did not have a raw value. This is considered a programmer error. \
-        You should use the .live static function to initialize a peripheral.
-        """
-    )
-}
-
 extension BluetoothManager {
     
     public static let live: BluetoothManager = { () -> BluetoothManager in
         var manager = BluetoothManager()
-        
         
         manager.create = { id, queue, options in
             return .concatenate(
@@ -60,16 +39,20 @@ extension BluetoothManager {
                         dependencies[id] = nil
                     }
                 },
-                dependencies[id]?
-                    .manager
-                    .publisher(for: \.isScanning)
-                    .map(BluetoothManager.Action.didUpdateScanningState)
-                    .eraseToEffect() ?? .none,
-                dependencies[id]?
-                    .manager
-                    .publisher(for: \.authorization)
-                    .map(BluetoothManager.Action.didUpdateAuthorization)
-                    .eraseToEffect() ?? .none
+                Deferred(createPublisher: { () -> AnyPublisher<BluetoothManager.Action, Never> in
+                    dependencies[id]?
+                        .manager
+                        .publisher(for: \.authorization)
+                        .map(BluetoothManager.Action.didUpdateAuthorization)
+                        .eraseToAnyPublisher() ?? Effect.none.eraseToAnyPublisher()
+                }).eraseToEffect(),
+                Deferred(createPublisher: { () -> AnyPublisher<BluetoothManager.Action, Never> in
+                    dependencies[id]?
+                        .manager
+                        .publisher(for: \.isScanning)
+                        .map(BluetoothManager.Action.didUpdateScanningState)
+                        .eraseToAnyPublisher() ?? Effect.none.eraseToAnyPublisher()
+                }).eraseToEffect()
             )
         }
         

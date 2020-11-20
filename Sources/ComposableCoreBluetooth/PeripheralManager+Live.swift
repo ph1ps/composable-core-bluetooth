@@ -46,16 +46,20 @@ extension PeripheralManager {
                         dependencies[id] = nil
                     }
                 },
-                dependencies[id]?
-                    .manager
-                    .publisher(for: \.isAdvertising)
-                    .map((/PeripheralManager.Action.didUpdateAdvertisingState..Result<Bool, BluetoothError>.success).embed)
-                    .eraseToEffect() ?? .none,
-                dependencies[id]?
-                    .manager
-                    .publisher(for: \.authorization)
-                    .map(PeripheralManager.Action.didUpdateAuthorization)
-                    .eraseToEffect() ?? .none
+                Deferred(createPublisher: { () -> AnyPublisher<PeripheralManager.Action, Never> in
+                    dependencies[id]?
+                        .manager
+                        .publisher(for: \.authorization)
+                        .map(PeripheralManager.Action.didUpdateAuthorization)
+                        .eraseToAnyPublisher() ?? Effect.none.eraseToAnyPublisher()
+                }).eraseToEffect(),
+                Deferred(createPublisher: { () -> AnyPublisher<PeripheralManager.Action, Never> in
+                    dependencies[id]?
+                        .manager
+                        .publisher(for: \.isAdvertising)
+                        .map((/PeripheralManager.Action.didUpdateAdvertisingState..Result<Bool, BluetoothError>.success).embed)
+                        .eraseToAnyPublisher() ?? Effect.none.eraseToAnyPublisher()
+                }).eraseToEffect()
             )
         }
         
