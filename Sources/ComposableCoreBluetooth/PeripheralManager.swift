@@ -61,6 +61,14 @@ public struct PeripheralManager {
     var unpublishL2CAPChannel: (AnyHashable, CBL2CAPPSM) -> Effect<Never, Never> = { _, _ in
         _unimplemented("unpublishL2CAPChannel")
     }
+    
+    var state: (AnyHashable) -> CBManagerState = { _ in
+        _unimplemented("state")
+    }
+    
+    var _authorization: () -> CBManagerAuthorization = {
+        _unimplemented("authorization")
+    }
 }
 
 @available(tvOS, unavailable)
@@ -114,6 +122,11 @@ extension PeripheralManager {
     public func unpublishL2CAPChannel(id: AnyHashable, _ psm: CBL2CAPPSM) -> Effect<Never, Never> {
         unpublishL2CAPChannel(id, psm)
     }
+    
+    @available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *)
+    public func authorization() -> CBManagerAuthorization {
+        _authorization()
+    }
 }
 
 @available(tvOS, unavailable)
@@ -133,7 +146,6 @@ extension PeripheralManager {
         case didOpen(Result<CBL2CAPChannel, BluetoothError>)
         
         case didUpdateState(CBManagerState)
-        case didUpdateAuthorization(CBManagerAuthorization)
         case didUpdateAdvertisingState(Result<Bool, BluetoothError>)
     }
 }

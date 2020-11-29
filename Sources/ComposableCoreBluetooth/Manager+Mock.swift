@@ -37,6 +37,9 @@ extension BluetoothManager {
         stopScan: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
             _unimplemented("stopScan")
         },
+        state: @escaping (AnyHashable) -> CBManagerState = { _ in
+            _unimplemented("state")
+        },
         authorization: @escaping () -> CBManagerAuthorization = {
             _unimplemented("authorization")
         }
@@ -50,6 +53,7 @@ extension BluetoothManager {
             retrievePeripherals: retrievePeripherals,
             scanForPeripherals: scanForPeripherals,
             stopScan: stopScan,
+            state: state,
             _authorization: authorization
         )
     }
@@ -80,6 +84,9 @@ extension BluetoothManager {
         stopScan: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
             _unimplemented("stopScan")
         },
+        state: @escaping (AnyHashable) -> CBManagerState = { _  in
+            _unimplemented("state")
+        },
         authorization: @escaping () -> CBManagerAuthorization = {
             _unimplemented("authorization")
         },
@@ -99,6 +106,7 @@ extension BluetoothManager {
             retrievePeripherals: retrievePeripherals,
             scanForPeripherals: scanForPeripherals,
             stopScan: stopScan,
+            state: state,
             _authorization: authorization,
             registerForConnectionEvents: registerForConnectionEvents,
             supports: supports

@@ -39,20 +39,10 @@ extension PeripheralManager {
                     
                     dependencies[id] = Dependencies(manager: manager, delegate: delegate, subscriber: subscriber)
                     
-                    subscriber.send(.didUpdateState(manager.state))
-                    subscriber.send(.didUpdateAuthorization(manager.authorization))
-                    
                     return AnyCancellable {
                         dependencies[id] = nil
                     }
                 },
-                Deferred(createPublisher: { () -> AnyPublisher<PeripheralManager.Action, Never> in
-                    dependencies[id]?
-                        .manager
-                        .publisher(for: \.authorization)
-                        .map(PeripheralManager.Action.didUpdateAuthorization)
-                        .eraseToAnyPublisher() ?? Effect.none.eraseToAnyPublisher()
-                }).eraseToEffect(),
                 Deferred(createPublisher: { () -> AnyPublisher<PeripheralManager.Action, Never> in
                     dependencies[id]?
                         .manager

@@ -44,6 +44,10 @@ public struct BluetoothManager {
         _unimplemented("stopScan")
     }
     
+    var state: (AnyHashable) -> CBManagerState = { _ in
+        _unimplemented("state")
+    }
+    
     var _authorization: () -> CBManagerAuthorization = {
         _unimplemented("authorization")
     }
@@ -92,6 +96,10 @@ extension BluetoothManager {
         stopScan(id)
     }
     
+    public func state(id: AnyHashable) -> CBManagerState {
+        return state(id)
+    }
+    
     @available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *)
     public func authorization() -> CBManagerAuthorization {
         _authorization()
@@ -118,7 +126,6 @@ extension BluetoothManager {
         case willRestore(RestorationOptions)
         
         case didUpdateState(CBManagerState)
-        case didUpdateAuthorization(CBManagerAuthorization)
         case didUpdateScanningState(Bool)
         
         @available(macOS, unavailable)

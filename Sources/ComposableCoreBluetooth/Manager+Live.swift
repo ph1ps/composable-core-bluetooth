@@ -25,28 +25,18 @@ extension BluetoothManager {
         var manager = BluetoothManager()
         
         manager.create = { id, queue, options in
-            return .concatenate(
+            return .merge(
                 Effect.run { subscriber in
                     let delegate = Delegate(subscriber)
                     let manager = CBCentralManager(delegate: delegate, queue: queue, options: options?.toDictionary())
                     
                     dependencies[id] = Dependencies(manager: manager, delegate: delegate, subscriber: subscriber)
                     
-                    subscriber.send(.didUpdateState(manager.state))
-                    subscriber.send(.didUpdateAuthorization(manager.authorization))
-                    
                     return AnyCancellable {
                         dependencies[id] = nil
                     }
                 },
-                Deferred(createPublisher: { () -> AnyPublisher<BluetoothManager.Action, Never> in
-                    dependencies[id]?
-                        .manager
-                        .publisher(for: \.authorization)
-                        .map(BluetoothManager.Action.didUpdateAuthorization)
-                        .eraseToAnyPublisher() ?? Effect.none.eraseToAnyPublisher()
-                }).eraseToEffect(),
-                Deferred(createPublisher: { () -> AnyPublisher<BluetoothManager.Action, Never> in
+                Deferred(createPublisher: {
                     dependencies[id]?
                         .manager
                         .publisher(for: \.isScanning)
@@ -121,6 +111,16 @@ extension BluetoothManager {
             manager._authorization = {
                 CBCentralManager.authorization
             }
+        }
+        
+        manager.state = { id in
+            
+            guard let dependency = dependencies[id] else {
+                couldNotFindBluetoothManager(id: id)
+                return .unknown
+            }
+            
+            return dependency.manager.state
         }
         
         #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
