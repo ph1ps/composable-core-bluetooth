@@ -13,15 +13,21 @@ public struct Descriptor: Equatable {
     
     let rawValue: CBDescriptor?
     public let identifier: CBUUID
+    public let characteristic: Characteristic
+    public var value: Value?
     
     init(from descriptor: CBDescriptor) {
         rawValue = descriptor
         identifier = descriptor.uuid
+        characteristic = Characteristic(from: descriptor.characteristic)
+        value = Self.anyToValue(uuid: identifier, descriptor.value)
     }
     
-    init(identifier: CBUUID) {
+    init(identifier: CBUUID, characteristic: Characteristic, value: Value?) {
         rawValue = nil
         self.identifier = identifier
+        self.characteristic = characteristic
+        self.value = value
     }
     
     static func anyToValue(uuid: CBUUID, _ value: Any?) -> Value? {
@@ -81,8 +87,16 @@ extension Descriptor {
 
 extension Descriptor {
     
-    public static func mock(identifier: CBUUID) -> Self {
-        return Descriptor(identifier: identifier)
+    public static func mock(
+        identifier: CBUUID,
+        characteristic: Characteristic,
+        value: Value?
+    ) -> Self {
+        Self(
+            identifier: identifier,
+            characteristic: characteristic,
+            value: value
+        )
     }
 }
 

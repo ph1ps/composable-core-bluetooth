@@ -10,38 +10,58 @@ import CoreBluetooth
 import ComposableArchitecture
 import Combine
 
-extension Peripheral {
+extension Peripheral.State {
     
-    public static func live(from cbPeripheral: CBPeripheral, subscriber: Effect<BluetoothManager.Action, Never>.Subscriber) -> Self {
+    public static func live(from cbPeripheral: CBPeripheral) -> Self {
+        #if !os(macOS)
+        return Peripheral.State(
+            identifier: cbPeripheral.identifier,
+            name: cbPeripheral.name,
+            state: cbPeripheral.state,
+            canSendWriteWithoutResponse: cbPeripheral.canSendWriteWithoutResponse,
+            isANCSAuthorized: cbPeripheral.ancsAuthorized,
+            services: cbPeripheral.services?.map(Service.init) ?? []
+        )
+        #else
+        return Peripheral.State(
+            identifier: cbPeripheral.identifier,
+            name: cbPeripheral.name,
+            state: cbPeripheral.state,
+            canSendWriteWithoutResponse: cbPeripheral.canSendWriteWithoutResponse,
+            services: cbPeripheral.services?.map(Service.init) ?? []
+        )
+        #endif
+    }
+}
 
-        var peripheral = Peripheral()
+extension Peripheral.Environment {
+    
+    static func live(from cbPeripheral: CBPeripheral, subscriber: Effect<BluetoothManager.Action, Never>.Subscriber) -> Self {
         
-        peripheral.rawValue = cbPeripheral
-        peripheral.delegate = Delegate(subscriber)
-        peripheral.identifier = { cbPeripheral.identifier }
-        peripheral.name = { cbPeripheral.name }
-        peripheral.services = { cbPeripheral.services?.map(Service.init) }
-        peripheral.state = { cbPeripheral.state }
-        peripheral.canSendWriteWithoutResponse = { cbPeripheral.canSendWriteWithoutResponse }
-        peripheral.maximumWriteValueLength = cbPeripheral.maximumWriteValueLength
+        var environment = Peripheral.Environment()
         
-        peripheral.readRSSI = {
+        environment.rawValue = cbPeripheral
+        environment.delegate = Delegate(subscriber)
+        
+        environment.stateCancelable = cbPeripheral
+            .publisher(for: \.state)
+            .sink(receiveValue: { state in
+                subscriber.send(.peripheral(cbPeripheral.identifier, .didUpdateState(state)))
+            })
+        
+        environment.readRSSI = {
             .fireAndForget { cbPeripheral.readRSSI() }
         }
         
-        peripheral.openL2CAPChannel = { psm in
+        environment.openL2CAPChannel = { psm in
             .fireAndForget { cbPeripheral.openL2CAPChannel(psm) }
         }
 
-        peripheral.discoverServices = { ids in
+        environment.discoverServices = { ids in
             .fireAndForget { cbPeripheral.discoverServices(ids) }
         }
         
-        #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
-        peripheral.ancsAuthorized = { cbPeripheral.ancsAuthorized }
-        #endif
-        
-        peripheral.discoverIncludedServices = { ids, service in
+        environment.discoverIncludedServices = { ids, service in
             
             guard let rawService = service.rawValue else {
                 couldNotFindRawServiceValue()
@@ -51,7 +71,7 @@ extension Peripheral {
             return .fireAndForget { cbPeripheral.discoverIncludedServices(ids, for: rawService) }
         }
         
-        peripheral.discoverCharacteristics = { ids, service in
+        environment.discoverCharacteristics = { ids, service in
             
             guard let rawService = service.rawValue else {
                 couldNotFindRawServiceValue()
@@ -61,7 +81,7 @@ extension Peripheral {
             return .fireAndForget { cbPeripheral.discoverCharacteristics(ids, for: rawService) }
         }
         
-        peripheral.discoverDescriptors = { characteristic in
+        environment.discoverDescriptors = { characteristic in
             
             guard let rawCharacteristic = characteristic.rawValue else {
                 couldNotFindRawCharacteristicValue()
@@ -71,7 +91,7 @@ extension Peripheral {
             return .fireAndForget { cbPeripheral.discoverDescriptors(for: rawCharacteristic) }
         }
         
-        peripheral.readCharacteristicValue = { characteristic in
+        environment.readCharacteristicValue = { characteristic in
             
             guard let rawCharacteristic = characteristic.rawValue else {
                 couldNotFindRawCharacteristicValue()
@@ -81,7 +101,7 @@ extension Peripheral {
             return .fireAndForget { cbPeripheral.readValue(for: rawCharacteristic) }
         }
         
-        peripheral.readDescriptorValue = { descriptor in
+        environment.readDescriptorValue = { descriptor in
             
             guard let rawDescriptor = descriptor.rawValue else {
                 couldNotFindRawDescriptorValue()
@@ -91,7 +111,7 @@ extension Peripheral {
             return .fireAndForget { cbPeripheral.readValue(for: rawDescriptor) }
         }
         
-        peripheral.writeCharacteristicValue = { data, characteristic, writeType in
+        environment.writeCharacteristicValue = { data, characteristic, writeType in
             
             guard let rawCharacteristic = characteristic.rawValue else {
                 couldNotFindRawCharacteristicValue()
@@ -101,7 +121,7 @@ extension Peripheral {
             return .fireAndForget { cbPeripheral.writeValue(data, for: rawCharacteristic, type: writeType) }
         }
         
-        peripheral.writeDescriptorValue = { data, descriptor in
+        environment.writeDescriptorValue = { data, descriptor in
             
             guard let rawDescriptor = descriptor.rawValue else {
                 couldNotFindRawDescriptorValue()
@@ -111,7 +131,7 @@ extension Peripheral {
             return .fireAndForget { cbPeripheral.writeValue(data, for: rawDescriptor) }
         }
         
-        peripheral.setNotifyValue = { value, characteristic in
+        environment.setNotifyValue = { value, characteristic in
             
             guard let rawCharacteristic = characteristic.rawValue else {
                 couldNotFindRawCharacteristicValue()
@@ -121,7 +141,7 @@ extension Peripheral {
             return .fireAndForget { cbPeripheral.setNotifyValue(value, for: rawCharacteristic) }
         }
         
-        return peripheral
+        return environment
     }
     
     class Delegate: NSObject, CBPeripheralDelegate {

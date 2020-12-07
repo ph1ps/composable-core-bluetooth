@@ -10,22 +10,42 @@ import Foundation
 import CoreBluetooth
 
 public struct Characteristic: Equatable {
-    
+
     let rawValue: CBCharacteristic?
     
     public let identifier: CBUUID
+    public let service: Service
     public let properties: CBCharacteristicProperties
+    public var value: Data?
+    public var descriptors: [Descriptor]
+    public var isNotifying: Bool
 
     init(from characteristic: CBCharacteristic) {
         rawValue = characteristic
         identifier = characteristic.uuid
+        service = Service(from: characteristic.service)
         properties = characteristic.properties
+        value = characteristic.value
+        descriptors = characteristic.descriptors?.map(Descriptor.init) ?? []
+        isNotifying = characteristic.isNotifying
     }
     
-    init(identifier: CBUUID, properties: CBCharacteristicProperties) {
-        rawValue = nil
+    init(
+        rawValue: CBCharacteristic?,
+        identifier: CBUUID,
+        service: Service,
+        properties: CBCharacteristicProperties,
+        value: Data?,
+        descriptors: [Descriptor],
+        isNotifying: Bool
+    ) {
+        self.rawValue = rawValue
         self.identifier = identifier
+        self.service = service
         self.properties = properties
+        self.value = value
+        self.descriptors = descriptors
+        self.isNotifying = isNotifying
     }
 }
 
@@ -40,8 +60,24 @@ extension Characteristic {
 }
 
 extension Characteristic {
-    public static func mock(identifier: CBUUID, properties: CBCharacteristicProperties) -> Self {
-        return Characteristic(identifier: identifier, properties: properties)
+    
+    public static func mock(
+        identifier: CBUUID,
+        service: Service,
+        properties: CBCharacteristicProperties,
+        value: Data?,
+        descriptors: [Descriptor],
+        isNotifying: Bool
+    ) -> Self {
+        Self(
+            rawValue: nil,
+            identifier: identifier,
+            service: service,
+            properties: properties,
+            value: value,
+            descriptors: descriptors,
+            isNotifying: isNotifying
+        )
     }
 }
 

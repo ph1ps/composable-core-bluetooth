@@ -55,22 +55,26 @@ extension BluetoothManager {
         
         manager.connect = { id, peripheral, options in
             
-            guard let rawPeripheral = peripheral.rawValue else {
+            guard let rawPeripheral = dependencies[id]?.manager.retrievePeripherals(withIdentifiers: [peripheral.identifier]).first else {
                 couldNotFindRawPeripheralValue()
                 return .none
             }
             
-            return .fireAndForget { dependencies[id]?.manager.connect(rawPeripheral, options: options?.toDictionary()) }
+            return .fireAndForget {
+                dependencies[id]?.manager.connect(rawPeripheral, options: options?.toDictionary())
+            }
         }
         
         manager.cancelConnection = { id, peripheral  in
             
-            guard let rawPeripheral = peripheral.rawValue else {
+            guard let rawPeripheral = dependencies[id]?.manager.retrievePeripherals(withIdentifiers: [peripheral.identifier]).first else {
                 couldNotFindRawPeripheralValue()
                 return .none
             }
             
-            return .fireAndForget { dependencies[id]?.manager.cancelPeripheralConnection(rawPeripheral) }
+            return .fireAndForget {
+                dependencies[id]?.manager.cancelPeripheralConnection(rawPeripheral)
+            }
         }
         
         manager.retrieveConnectedPeripherals = { id, uuids in
@@ -83,7 +87,7 @@ extension BluetoothManager {
             return dependency
                 .manager
                 .retrieveConnectedPeripherals(withServices: uuids)
-                .map { Peripheral.live(from: $0, subscriber: dependency.subscriber) }
+                .map(Peripheral.State.live)
         }
         
         manager.retrievePeripherals = { id, uuids in
@@ -95,16 +99,20 @@ extension BluetoothManager {
             
             return dependency
                 .manager
-                .retrieveConnectedPeripherals(withServices: uuids.map(CBUUID.init))
-                .map { Peripheral.live(from: $0, subscriber: dependency.subscriber) }
+                .retrievePeripherals(withIdentifiers: uuids)
+                .map(Peripheral.State.live)
         }
         
         manager.scanForPeripherals = { id, services, options in
-            .fireAndForget { dependencies[id]?.manager.scanForPeripherals(withServices: services, options: options?.toDictionary()) }
+            .fireAndForget {
+                dependencies[id]?.manager.scanForPeripherals(withServices: services, options: options?.toDictionary())
+            }
         }
         
         manager.stopScan = { id in
-            .fireAndForget { dependencies[id]?.manager.stopScan() }
+            .fireAndForget {
+                dependencies[id]?.manager.stopScan()
+            }
         }
         
         if #available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *) {
@@ -123,9 +131,26 @@ extension BluetoothManager {
             return dependency.manager.state
         }
         
+        manager.peripheralEnvironment = { id, uuid in
+            
+            guard let dependency = dependencies[id] else {
+                couldNotFindBluetoothManager(id: id)
+                return nil
+            }
+            
+            guard let rawPeripheral = dependencies[id]?.manager.retrievePeripherals(withIdentifiers: [uuid]).first else {
+                couldNotFindRawPeripheralValue()
+                return nil
+            }
+            
+            return Peripheral.Environment.live(from: rawPeripheral, subscriber: dependency.subscriber)
+        }
+        
         #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
         manager.registerForConnectionEvents = { id, options in
-            .fireAndForget { dependencies[id]?.manager.registerForConnectionEvents(options: options?.toDictionary()) }
+            .fireAndForget {
+                dependencies[id]?.manager.registerForConnectionEvents(options: options?.toDictionary())
+            }
         }
         #endif
         
@@ -135,7 +160,9 @@ extension BluetoothManager {
 
         return manager
     }()
-    
+}
+
+extension BluetoothManager {
     class Delegate: NSObject, CBCentralManagerDelegate {
         let subscriber: Effect<BluetoothManager.Action, Never>.Subscriber
         
@@ -144,41 +171,36 @@ extension BluetoothManager {
         }
         
         func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-            subscriber.send(.didConnect(.live(from: peripheral, subscriber: subscriber)))
+            subscriber.send(.peripheral(peripheral.identifier, .didConnect))
         }
         
         func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
             if let error = error {
                 if let error = error as? CBError {
-                    subscriber.send(.didDisconnect(.coreBluetooth(error)))
+                    subscriber.send(.peripheral(peripheral.identifier, .didDisconnect(.coreBluetooth(error))))
                 } else {
-                    subscriber.send(.didDisconnect(.unknown(error.localizedDescription)))
+                    subscriber.send(.peripheral(peripheral.identifier, .didDisconnect(.unknown(error.localizedDescription))))
                 }
             } else {
-                subscriber.send(.didDisconnect(nil))
+                subscriber.send(.peripheral(peripheral.identifier, .didDisconnect(.none)))
             }
         }
         
         func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
             if let error = error {
                 if let error = error as? CBError {
-                    subscriber.send(.didFailToConnect(.coreBluetooth(error)))
+                    subscriber.send(.peripheral(peripheral.identifier, .didFailToConnect(.coreBluetooth(error))))
                 } else {
-                    subscriber.send(.didFailToConnect(.unknown(error.localizedDescription)))
+                    subscriber.send(.peripheral(peripheral.identifier, .didFailToConnect(.unknown(error.localizedDescription))))
                 }
             } else {
-                subscriber.send(.didFailToConnect(.unknown(nil)))
+                subscriber.send(.peripheral(peripheral.identifier, .didFailToConnect(.unknown(.none))))
             }
         }
-        
-        #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
-        func centralManager(_ central: CBCentralManager, connectionEventDidOccur event: CBConnectionEvent, for peripheral: CBPeripheral) {
-            subscriber.send(.connectionEventDidOccur(event, .live(from: peripheral, subscriber: subscriber)))
-        }
-        #endif
+
         
         func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-            subscriber.send(.didDiscover(.live(from: peripheral, subscriber: subscriber), .init(from: advertisementData), RSSI))
+            subscriber.send(.didDiscover(Peripheral.State.live(from: peripheral), BluetoothManager.AdvertismentData(from: advertisementData), RSSI))
         }
         
         func centralManagerDidUpdateState(_ central: CBCentralManager) {
@@ -186,12 +208,18 @@ extension BluetoothManager {
         }
         
         func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
-            subscriber.send(.willRestore(.init(from: dict, subscriber: subscriber)))
+            subscriber.send(.willRestore(RestorationOptions(from: dict)))
         }
         
         #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
+        func centralManager(_ central: CBCentralManager, connectionEventDidOccur event: CBConnectionEvent, for peripheral: CBPeripheral) {
+            subscriber.send(.peripheral(peripheral.identifier, .connectionEventDidOccur(event)))
+        }
+        #endif
+        
+        #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
         func centralManager(_ central: CBCentralManager, didUpdateANCSAuthorizationFor peripheral: CBPeripheral) {
-            subscriber.send(.didUpdateANCSAuthorization(.live(from: peripheral, subscriber: subscriber)))
+            subscriber.send(.peripheral(peripheral.identifier, .didUpdateANCSAuthorization(peripheral.ancsAuthorized)))
         }
         #endif
     }

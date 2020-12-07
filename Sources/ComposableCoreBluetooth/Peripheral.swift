@@ -7,156 +7,181 @@
 //
 
 import CoreBluetooth
+import Combine
 import ComposableArchitecture
 
-public struct Peripheral {
+public enum Peripheral {
     
-    public var rawValue: CBPeripheral?
-    var delegate: CBPeripheralDelegate?
-    
-    public internal(set) var identifier: () -> UUID = {
-        _unimplemented("identifier")
+    public struct State: Equatable {
+        
+        public let identifier: UUID
+        public var name: String?
+        public var state: CBPeripheralState
+        public let canSendWriteWithoutResponse: Bool
+        public var services: [Service]
+        
+        #if !os(macOS)
+        public var isANCSAuthorized: Bool
+        
+        init(
+            identifier: UUID,
+            name: String?,
+            state: CBPeripheralState,
+            canSendWriteWithoutResponse: Bool,
+            isANCSAuthorized: Bool,
+            services: [Service]
+        ) {
+            self.identifier = identifier
+            self.name = name
+            self.state = state
+            self.canSendWriteWithoutResponse = canSendWriteWithoutResponse
+            self.isANCSAuthorized = isANCSAuthorized
+            self.services = services
+        }
+        #else
+        init(
+            identifier: UUID,
+            name: String?,
+            state: CBPeripheralState,
+            canSendWriteWithoutResponse: Bool,
+            services: [Service]
+        ) {
+            self.identifier = identifier
+            self.name = name
+            self.state = state
+            self.canSendWriteWithoutResponse = canSendWriteWithoutResponse
+            self.services = services
+        }
+        #endif
     }
     
-    public internal(set) var name: () -> String? = {
-        _unimplemented("name")
-    }
-    
-    public internal(set) var services: () -> [Service]? = {
-        _unimplemented("services")
-    }
-    
-    public internal(set) var state: () -> CBPeripheralState = {
-        _unimplemented("state")
-    }
-    
-    public internal(set) var canSendWriteWithoutResponse: () -> Bool = {
-        _unimplemented("canSendWriteWithoutResponse")
-    }
-    
-    public internal(set) var readRSSI: () -> Effect<Never, Never> = {
-        _unimplemented("readRSSI")
-    }
-    
-    @available(macOS, unavailable)
-    public internal(set) var ancsAuthorized: () -> Bool = {
-        _unimplemented("ancsAuthorized")
-    }
-    
-    var discoverServices: ([CBUUID]?) -> Effect<Never, Never> = { _ in
-        _unimplemented("discoverServices")
-    }
-    
-    var discoverIncludedServices: ([CBUUID]?, Service) -> Effect<Never, Never> = { _, _ in
-        _unimplemented("discoverIncludedServices")
-    }
-    
-    var discoverCharacteristics: ([CBUUID]?, Service) -> Effect<Never, Never> = { _, _ in
-        _unimplemented("discoverCharacteristics")
-    }
-    
-    var discoverDescriptors: (Characteristic) -> Effect<Never, Never> = { _ in
-        _unimplemented("discoverDescriptors")
-    }
-    
-    var readCharacteristicValue: (Characteristic) -> Effect<Never, Never> = { _ in
-        _unimplemented("readCharacteristicValue")
-    }
-    
-    var readDescriptorValue: (Descriptor) -> Effect<Never, Never> = { _ in
-        _unimplemented("readDescriptorValue")
-    }
-    
-    var writeCharacteristicValue: (Data, Characteristic, CBCharacteristicWriteType) -> Effect<Never, Never> = { _, _, _ in
-        _unimplemented("writeCharacteristicValue")
-    }
-    
-    var writeDescriptorValue: (Data, Descriptor) -> Effect<Never, Never> = { _, _ in
-        _unimplemented("writeDescriptorValue")
-    }
-    
-    var maximumWriteValueLength: (CBCharacteristicWriteType) -> Int = { _ in
-        _unimplemented("maximumWriteValueLength")
-    }
-    
-    var setNotifyValue: (Bool, Characteristic) -> Effect<Never, Never> = { _, _ in
-        _unimplemented("setNotifyValue")
-    }
-    
-    var openL2CAPChannel: (CBL2CAPPSM) -> Effect<Never, Never> = { _ in
-        _unimplemented("openL2CAPChannel")
+    public struct Environment {
+        
+        var rawValue: CBPeripheral?
+        var delegate: CBPeripheralDelegate?
+        var stateCancelable: AnyCancellable?
+        
+        public internal(set) var readRSSI: () -> Effect<Never, Never>
+        var discoverServices: ([CBUUID]?) -> Effect<Never, Never>
+        var discoverIncludedServices: ([CBUUID]?, Service) -> Effect<Never, Never>
+        var discoverCharacteristics: ([CBUUID]?, Service) -> Effect<Never, Never>
+        var discoverDescriptors: (Characteristic) -> Effect<Never, Never>
+        var readCharacteristicValue: (Characteristic) -> Effect<Never, Never>
+        var readDescriptorValue: (Descriptor) -> Effect<Never, Never>
+        var writeCharacteristicValue: (Data, Characteristic, CBCharacteristicWriteType) -> Effect<Never, Never>
+        var writeDescriptorValue: (Data, Descriptor) -> Effect<Never, Never>
+        var setNotifyValue: (Bool, Characteristic) -> Effect<Never, Never>
+        var openL2CAPChannel: (CBL2CAPPSM) -> Effect<Never, Never>
+        var maximumWriteValueLength: (CBCharacteristicWriteType) -> Int
+
+        init(
+            rawValue: CBPeripheral? = nil,
+            delegate: CBPeripheralDelegate? = nil,
+            stateCancelable: AnyCancellable? = nil,
+            readRSSI: @escaping () -> Effect<Never, Never> = { _unimplemented("readRSSI") },
+            discoverServices: @escaping ([CBUUID]?) -> Effect<Never, Never> = { _ in _unimplemented("discoverServices") },
+            discoverIncludedServices: @escaping ([CBUUID]?, Service) -> Effect<Never, Never> = { _, _ in _unimplemented("discoverIncludedServices") },
+            discoverCharacteristics: @escaping ([CBUUID]?, Service) -> Effect<Never, Never> = { _, _ in _unimplemented("discoverCharacteristics") },
+            discoverDescriptors: @escaping (Characteristic) -> Effect<Never, Never> = { _ in _unimplemented("discoverDescriptors") },
+            readCharacteristicValue: @escaping (Characteristic) -> Effect<Never, Never> = { _ in _unimplemented("readCharacteristicValue")},
+            readDescriptorValue: @escaping (Descriptor) -> Effect<Never, Never> = { _ in _unimplemented("readDescriptorValue") },
+            writeCharacteristicValue: @escaping (Data, Characteristic, CBCharacteristicWriteType) -> Effect<Never, Never> = { _, _, _ in _unimplemented("writeCharacteristicValue") },
+            writeDescriptorValue: @escaping (Data, Descriptor) -> Effect<Never, Never> = { _, _ in _unimplemented("writeDescriptorValue") },
+            setNotifyValue: @escaping (Bool, Characteristic) -> Effect<Never, Never> = { _, _ in _unimplemented("setNotifyValue") },
+            openL2CAPChannel: @escaping (CBL2CAPPSM) -> Effect<Never, Never> = { _ in _unimplemented("openL2CAPChannel") },
+            maximumWriteValueLength: @escaping (CBCharacteristicWriteType) -> Int = { _ in _unimplemented("maximumWriteValueLength") }
+        ) {
+            self.rawValue = rawValue
+            self.delegate = delegate
+            self.stateCancelable = stateCancelable
+            self.readRSSI = readRSSI
+            self.discoverServices = discoverServices
+            self.discoverIncludedServices = discoverIncludedServices
+            self.discoverCharacteristics = discoverCharacteristics
+            self.discoverDescriptors = discoverDescriptors
+            self.readCharacteristicValue = readCharacteristicValue
+            self.readDescriptorValue = readDescriptorValue
+            self.writeCharacteristicValue = writeCharacteristicValue
+            self.writeDescriptorValue = writeDescriptorValue
+            self.setNotifyValue = setNotifyValue
+            self.openL2CAPChannel = openL2CAPChannel
+            self.maximumWriteValueLength = maximumWriteValueLength
+        }
+        
+        public func discoverServices(_ uuids: [CBUUID]? = nil) -> Effect<Never, Never> {
+            discoverServices(uuids)
+        }
+        
+        public func discoverIncludedServices(_ uuids: [CBUUID]? = nil, for service: Service) -> Effect<Never, Never> {
+            discoverIncludedServices(uuids, service)
+        }
+        
+        public func discoverCharacteristics(_ uuids: [CBUUID]? = nil, for service: Service) -> Effect<Never, Never> {
+            discoverCharacteristics(uuids, service)
+        }
+        
+        public func discoverDescriptors(for characteristic: Characteristic) -> Effect<Never, Never> {
+            discoverDescriptors(characteristic)
+        }
+        
+        public func readValue(for characteristic: Characteristic) -> Effect<Never, Never> {
+            readCharacteristicValue(characteristic)
+        }
+        
+        public func readValue(for descriptor: Descriptor) -> Effect<Never, Never> {
+            readDescriptorValue(descriptor)
+        }
+        
+        public func writeValue(_ data: Data, for characteristic: Characteristic, type: CBCharacteristicWriteType) -> Effect<Never, Never> {
+            writeCharacteristicValue(data, characteristic, type)
+        }
+        
+        public func writeValue(_ data: Data, for descriptor: Descriptor) -> Effect<Never, Never> {
+            writeDescriptorValue(data, descriptor)
+        }
+            
+        public func setNotifyValue(_ enabled: Bool, for characteristic: Characteristic) -> Effect<Never, Never> {
+            setNotifyValue(enabled, characteristic)
+        }
+        
+        public func openL2CAPChannel(_ psm: CBL2CAPPSM) -> Effect<Never, Never> {
+            openL2CAPChannel(psm)
+        }
+        
+        public func maximumWriteValueLength(for type: CBCharacteristicWriteType) -> Int {
+            maximumWriteValueLength(type)
+        }
     }
 }
 
-extension Peripheral {
-    public func discoverServices(_ uuids: [CBUUID]? = nil) -> Effect<Never, Never> {
-        discoverServices(uuids)
-    }
-    
-    public func discoverIncludedServices(_ uuids: [CBUUID]? = nil, for service: Service) -> Effect<Never, Never> {
-        discoverIncludedServices(uuids, service)
-    }
-    
-    public func discoverCharacteristics(_ uuids: [CBUUID]? = nil, for service: Service) -> Effect<Never, Never> {
-        discoverCharacteristics(uuids, service)
-    }
-    
-    public func discoverDescriptors(for characteristic: Characteristic) -> Effect<Never, Never> {
-        discoverDescriptors(characteristic)
-    }
-    
-    public func readValue(for characteristic: Characteristic) -> Effect<Never, Never> {
-        readCharacteristicValue(characteristic)
-    }
-    
-    public func readValue(for descriptor: Descriptor) -> Effect<Never, Never> {
-        readDescriptorValue(descriptor)
-    }
-    
-    public func writeValue(_ data: Data, for characteristic: Characteristic, type: CBCharacteristicWriteType) -> Effect<Never, Never> {
-        writeCharacteristicValue(data, characteristic, type)
-    }
-    
-    public func writeValue(_ data: Data, for descriptor: Descriptor) -> Effect<Never, Never> {
-        writeDescriptorValue(data, descriptor)
-    }
-    
-    public func maximumWriteValueLength(for writeType: CBCharacteristicWriteType) -> Int {
-        maximumWriteValueLength(writeType)
-    }
-    
-    public func setNotifyValue(_ enabled: Bool, for characteristic: Characteristic) -> Effect<Never, Never> {
-        setNotifyValue(enabled, characteristic)
-    }
-    
-    public func openL2CAPChannel(_ psm: CBL2CAPPSM) -> Effect<Never, Never> {
-        openL2CAPChannel(psm)
+extension Peripheral.State: Identifiable {
+    public var id: UUID {
+        identifier
     }
 }
 
 extension Peripheral {
     public enum Action: Equatable {
         case isReadyToSendWriteWithoutResponse
-        case didDiscoverServices(Result<[Service], BluetoothError>)
+        case didUpdateName(String?)
+        case didUpdateState(CBPeripheralState)
+        case didModifyServices([Service])
         case didReadRSSI(Result<NSNumber, BluetoothError>)
         case didOpenL2CAPChannel(Result<CBL2CAPChannel, BluetoothError>)
-        case didUpdateName(String?)
-        case didModifyServices([Service])
+        case didDiscoverServices(Result<[Service], BluetoothError>)
         
+        case didConnect
+        case didDisconnect(BluetoothError?)
+        case didFailToConnect(BluetoothError)
+        
+        @available(macOS, unavailable)
+        case didUpdateANCSAuthorization(Bool)
+        
+        @available(macOS, unavailable)
+        case connectionEventDidOccur(CBConnectionEvent)
+
         case service(CBUUID, Service.Action)
         case characteristic(CBUUID, Characteristic.Action)
         case descriptor(CBUUID, Descriptor.Action)
-    }
-}
-
-extension Peripheral: Equatable {
-    public static func == (lhs: Peripheral, rhs: Peripheral) -> Bool {
-        return lhs.rawValue == rhs.rawValue
-    }
-}
-
-extension Peripheral: Identifiable {
-    public var id: UUID {
-        return identifier()
     }
 }

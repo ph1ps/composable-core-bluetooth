@@ -20,19 +20,19 @@ public struct BluetoothManager {
         _unimplemented("destroy")
     }
     
-    var connect: (AnyHashable, Peripheral, ConnectionOptions?) -> Effect<Never, Never> = { _, _, _ in
+    var connect: (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never, Never> = { _, _, _ in
         _unimplemented("connect")
     }
     
-    var cancelConnection: (AnyHashable, Peripheral) -> Effect<Never, Never> = { _, _ in
+    var cancelConnection: (AnyHashable, Peripheral.State) -> Effect<Never, Never> = { _, _ in
         _unimplemented("cancelConnection")
     }
     
-    var retrieveConnectedPeripherals: (AnyHashable, [CBUUID]) -> [Peripheral] = { _, _ in
+    var retrieveConnectedPeripherals: (AnyHashable, [CBUUID]) -> [Peripheral.State] = { _, _ in
         _unimplemented("retrieveConnectedPeripherals")
     }
     
-    var retrievePeripherals: (AnyHashable, [UUID]) -> [Peripheral] = { _, _ in
+    var retrievePeripherals: (AnyHashable, [UUID]) -> [Peripheral.State] = { _, _ in
         _unimplemented("retrievePeripherals")
     }
     
@@ -46,6 +46,10 @@ public struct BluetoothManager {
     
     var state: (AnyHashable) -> CBManagerState = { _ in
         _unimplemented("state")
+    }
+    
+    var peripheralEnvironment: (AnyHashable, UUID) -> Peripheral.Environment? = { _, _ in
+        _unimplemented("peripheralEnvironment")
     }
     
     var _authorization: () -> CBManagerAuthorization = {
@@ -72,19 +76,19 @@ extension BluetoothManager {
         destroy(id)
     }
     
-    public func connect(id: AnyHashable, to peripheral: Peripheral, options: ConnectionOptions? = nil) -> Effect<Never, Never> {
+    public func connect(id: AnyHashable, to peripheral: Peripheral.State, options: ConnectionOptions? = nil) -> Effect<Never, Never> {
         connect(id, peripheral, options)
     }
     
-    public func cancelConnection(id: AnyHashable, with peripheral: Peripheral) -> Effect<Never, Never> {
+    public func cancelConnection(id: AnyHashable, with peripheral: Peripheral.State) -> Effect<Never, Never> {
         cancelConnection(id, peripheral)
     }
     
-    public func retrieveConnectedPeripherals(id: AnyHashable, services: [CBUUID]) -> [Peripheral] {
+    public func retrieveConnectedPeripherals(id: AnyHashable, services: [CBUUID]) -> [Peripheral.State] {
         retrieveConnectedPeripherals(id, services)
     }
     
-    public func retrievePeripherals(id: AnyHashable, identifiers: [UUID]) -> [Peripheral] {
+    public func retrievePeripherals(id: AnyHashable, identifiers: [UUID]) -> [Peripheral.State] {
         retrievePeripherals(id, identifiers)
     }
     
@@ -97,7 +101,11 @@ extension BluetoothManager {
     }
     
     public func state(id: AnyHashable) -> CBManagerState {
-        return state(id)
+        state(id)
+    }
+    
+    public func peripheralEnvironment(id: AnyHashable, for uuid: UUID) -> Peripheral.Environment? {
+        peripheralEnvironment(id, uuid)
     }
     
     @available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *)
@@ -119,21 +127,11 @@ extension BluetoothManager {
 extension BluetoothManager {
     
     public enum Action: Equatable {
-        case didConnect(Peripheral)
-        case didDisconnect(BluetoothError?)
-        case didFailToConnect(BluetoothError)
-        case didDiscover(Peripheral, AdvertismentData, NSNumber)
-        case willRestore(RestorationOptions)
-        
         case didUpdateState(CBManagerState)
         case didUpdateScanningState(Bool)
+        case didDiscover(Peripheral.State, AdvertismentData, NSNumber)
+        case willRestore(RestorationOptions)
         
-        @available(macOS, unavailable)
-        case didUpdateANCSAuthorization(Peripheral)
-        
-        @available(macOS, unavailable)
-        case connectionEventDidOccur(CBConnectionEvent, Peripheral)
-
         case peripheral(UUID, Peripheral.Action)
     }
 }
@@ -299,16 +297,14 @@ extension BluetoothManager {
     
     public struct RestorationOptions: Equatable {
         
-        public let peripherals: [Peripheral]?
+        public let peripherals: [Peripheral.State]?
         public let scannedServices: [CBUUID]?
         public let scanOptions: BluetoothManager.ScanOptions?
         
-        init(from dictionary: [String: Any], subscriber: Effect<BluetoothManager.Action, Never>.Subscriber) {
+        init(from dictionary: [String: Any]) {
             scannedServices = dictionary[CBCentralManagerRestoredStateScanServicesKey] as? [CBUUID]
             scanOptions = ScanOptions(from: dictionary[CBCentralManagerRestoredStateScanOptionsKey] as? [String: Any])
-            peripherals = (dictionary[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral])?.map { peripheral in
-                Peripheral.live(from: peripheral, subscriber: subscriber)
-            }
+            peripherals = (dictionary[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral])?.map(Peripheral.State.live)
         }
     }
     

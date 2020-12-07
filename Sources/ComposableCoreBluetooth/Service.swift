@@ -14,17 +14,28 @@ public struct Service: Equatable {
     let rawValue: CBService?
     public let identifier: CBUUID
     public let isPrimary: Bool
+    public var characteristics: [Characteristic]
+    public var includedServices: [Service]
     
     init(from service: CBService) {
         rawValue = service
         identifier = service.uuid
         isPrimary = service.isPrimary
+        characteristics = service.characteristics?.map(Characteristic.init) ?? []
+        includedServices = service.includedServices?.map(Service.init) ?? []
     }
     
-    init(identifier: CBUUID, isPrimary: Bool) {
+    init(
+        identifier: CBUUID,
+        isPrimary: Bool,
+        characteristics: [Characteristic],
+        includedServices: [Service]
+    ) {
         rawValue = nil
         self.identifier = identifier
         self.isPrimary = isPrimary
+        self.characteristics = characteristics
+        self.includedServices = includedServices
     }
 }
 
@@ -37,8 +48,18 @@ extension Service {
 }
 
 extension Service {
-    public static func mock(identifier: CBUUID, isPrimary: Bool) -> Self {
-        return Service(identifier: identifier, isPrimary: isPrimary)
+    public static func mock(
+        identifier: CBUUID,
+        isPrimary: Bool,
+        characteristics: [Characteristic],
+        includedServices: [Service]
+    ) -> Self {
+        Self(
+            identifier: identifier,
+            isPrimary: isPrimary,
+            characteristics: characteristics,
+            includedServices: includedServices
+        )
     }
 }
 

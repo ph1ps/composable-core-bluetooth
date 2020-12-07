@@ -10,10 +10,23 @@ import Foundation
 import CoreBluetooth
 
 public struct MutableService {
+    
     public var type: CBUUID
     public var isPrimary: Bool
     public var characteristics: [MutableCharacteristic]?
     public var includedServices: [MutableService]?
+    
+    public init(
+        type: CBUUID,
+        isPrimary: Bool,
+        characteristics: [MutableCharacteristic]?,
+        includedServices: [MutableService]?
+    ) {
+        self.type = type
+        self.isPrimary = isPrimary
+        self.characteristics = characteristics
+        self.includedServices = includedServices
+    }
     
     @available(tvOS, unavailable)
     @available(watchOS, unavailable)

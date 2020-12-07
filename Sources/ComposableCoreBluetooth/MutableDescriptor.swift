@@ -10,7 +10,12 @@ import Foundation
 import CoreBluetooth
 
 public struct MutableDescriptor {
+    
     public var value: Descriptor.Value
+    
+    public init(value: Descriptor.Value) {
+        self.value = value
+    }
     
     @available(tvOS, unavailable)
     @available(watchOS, unavailable)
