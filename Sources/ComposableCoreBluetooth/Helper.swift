@@ -8,6 +8,15 @@
 
 import Foundation
 import CoreBluetooth
+import ComposableArchitecture
+import Combine
+
+public func fail(_ message: String) {
+    // reuse failing effect in order to fail if current function is invoked
+    let cancellable = Effect<Int, Never>.failing(message).sink { _ in }
+    var cancellables = [AnyCancellable]()
+    cancellables.append(cancellable)
+}
 
 public func _unimplemented(_ function: StaticString, file: StaticString = #file, line: UInt = #line) -> Never {
     fatalError(
