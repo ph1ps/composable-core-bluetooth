@@ -6,8 +6,8 @@
 //  Copyright © 2020 Philipp Gabriel. All rights reserved.
 //
 
-import CoreBluetooth
 import ComposableArchitecture
+import CoreBluetooth
 
 extension Peripheral.State {
     
