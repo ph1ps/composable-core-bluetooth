@@ -42,7 +42,7 @@ extension Peripheral.Environment {
         
         environment.rawValue = cbPeripheral
         environment.delegate = Delegate(subscriber)
-        
+        cbPeripheral.delegate = environment.delegate
         environment.stateCancelable = cbPeripheral
             .publisher(for: \.state)
             .sink(receiveValue: { state in
