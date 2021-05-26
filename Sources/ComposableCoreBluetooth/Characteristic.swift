@@ -9,7 +9,7 @@
 import Foundation
 import CoreBluetooth
 
-public struct Characteristic: Equatable {
+public struct Characteristic {
 
     let rawValue: CBCharacteristic?
     
@@ -84,5 +84,23 @@ extension Characteristic {
 extension Characteristic: Identifiable {
     public var id: CBUUID {
         return identifier
+    }
+}
+
+extension Characteristic: Equatable {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.identifier == rhs.identifier &&
+        lhs.properties == rhs.properties &&
+        lhs.value == rhs.value &&
+        lhs.descriptors == rhs.descriptors &&
+        lhs.isNotifying == rhs.isNotifying &&
+            // Here we explicitly check for service property without
+            // checking its characteristics for equality
+            // to avoid recursion which leads to stack overflow
+            lhs.service.identifier == rhs.service.identifier &&
+            lhs.service.characteristics().count == rhs.service.characteristics().count &&
+            lhs.service.includedServices == rhs.service.includedServices &&
+            lhs.service.isPrimary == rhs.service.isPrimary &&
+            lhs.service.rawValue == rhs.service.rawValue
     }
 }

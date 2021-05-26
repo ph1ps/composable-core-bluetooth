@@ -74,6 +74,7 @@ extension Service: Equatable {
         lhs.rawValue == rhs.rawValue &&
             lhs.identifier == rhs.id &&
             lhs.isPrimary == rhs.isPrimary &&
+            lhs.characteristics() == rhs.characteristics() &&
             lhs.includedServices == rhs.includedServices
     }
 }

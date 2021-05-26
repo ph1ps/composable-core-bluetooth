@@ -9,6 +9,7 @@
 import Foundation
 import CoreBluetooth
 import ComposableArchitecture
+import XCTestDynamicOverlay
 
 extension BluetoothManager {
     

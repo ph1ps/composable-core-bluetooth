@@ -8,6 +8,8 @@
 
 import ComposableArchitecture
 import CoreBluetooth
+import XCTestDynamicOverlay
+
 
 extension Peripheral.State {
     
