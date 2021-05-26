@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "ComposableCoreBluetooth",
+    name: "composable-core-bluetooth",
     platforms: [
       .iOS(.v13),
       .macOS(.v10_15),
