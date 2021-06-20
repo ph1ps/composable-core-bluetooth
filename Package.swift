@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "ComposableCoreBluetooth",
+    name: "composable-core-bluetooth",
     platforms: [
       .iOS(.v13),
       .macOS(.v10_15),
@@ -18,7 +18,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.9.0")
+        .package(url: "https://github.com/pointfreeco/swift-composable-architecture", .exact("0.18.0"))
     ],
     targets: [
         .target(

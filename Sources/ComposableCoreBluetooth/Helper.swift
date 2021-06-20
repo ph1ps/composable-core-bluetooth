@@ -8,6 +8,13 @@
 
 import Foundation
 import CoreBluetooth
+import ComposableArchitecture
+import Combine
+import XCTestDynamicOverlay
+
+public func fail(_ failingFuncName: String) {
+    XCTFail("\(failingFuncName) - A failing environment function is invoked.")
+}
 
 public func _unimplemented(_ function: StaticString, file: StaticString = #file, line: UInt = #line) -> Never {
     fatalError(
